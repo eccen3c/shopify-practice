@@ -1,0 +1,113 @@
+.main-banners {
+  padding: 6px;
+}
+
+.main-banners__grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 4px;
+  height: 500px;
+}
+
+.main-banners__main {
+  position: relative;
+  display: block;
+  background-size: cover;
+  background-position: center;
+  text-decoration: none;
+  overflow: hidden;
+  transition: filter 0.2s ease;
+}
+
+.main-banners__main:hover {
+  filter: brightness(0.75);
+}
+
+.main-banners__side {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 4px;
+}
+
+.main-banners__side-item {
+  position: relative;
+  display: block;
+  background-size: cover;
+  background-position: center;
+  text-decoration: none;
+  overflow: hidden;
+  transition: filter 0.2s ease;
+}
+
+.main-banners__side-item:hover {
+  filter: brightness(0.75);
+}
+
+.main-banners__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.main-banners__content {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  right: 24px;
+  z-index: 1;
+  color: #fff;
+}
+
+.main-banners__pretitle {
+  font-family: 'Beatrice', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+  opacity: 0.85;
+}
+
+.main-banners__title {
+  font-family: 'Beatrice', sans-serif;
+  font-weight: 700;
+  font-size: 32px;
+  margin: 0;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.main-banners__side-title {
+  font-family: 'Beatrice', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.main-banners__side-subtitle {
+  font-family: 'Cambon', serif;
+  font-weight: 300;
+  font-size: 13px;
+  margin: 0;
+  opacity: 0.9;
+}
+
+@media (max-width: 749px) {
+  .main-banners__grid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .main-banners__main {
+    height: 280px;
+  }
+
+  .main-banners__side {
+    grid-template-rows: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .main-banners__side-item {
+    height: 280px;
+  }
+}

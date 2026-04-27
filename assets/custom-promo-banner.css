@@ -1,0 +1,150 @@
+.promo-banner {
+  background-color: #1F727C;
+  background-size: cover;
+  background-position: center;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+}
+
+.promo-banner__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  gap: 40px;
+}
+
+.promo-banner__left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.promo-banner__pretitle {
+  font-family: 'Beatrice', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #fff;
+  margin: 0;
+}
+
+.promo-banner__title {
+  font-family: 'Cambon', serif;
+  font-weight: 300;
+  font-size: 34px;
+  color: #fff;
+  margin: 0;
+  line-height: 1;
+}
+
+.promo-banner__btn {
+  display: inline-block;
+  background: #FF8674;
+  color: #fff;
+  font-family: 'Cambon', serif;
+  font-weight: 300;
+  font-size: 15px;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 16px 28px;
+  line-height: 1;
+  align-self: flex-start;
+  transition: opacity 0.2s;
+}
+
+.promo-banner__btn:hover {
+  opacity: 0.85;
+}
+
+/* Countdown */
+.promo-banner__timer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.promo-banner__timer-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 65px;
+}
+
+.promo-banner__timer-num {
+  font-family: 'Cambon', serif;
+  font-weight: 300;
+  font-size: 28px;
+  color: #fff;
+  line-height: 1;
+  display: block;
+  text-align: center;
+}
+
+.promo-banner__timer-label {
+  font-family: 'Cambon', serif;
+  font-weight: 300;
+  font-size: 12px;
+  color: #fff;
+  text-transform: uppercase;
+  line-height: 1;
+  display: block;
+}
+
+.promo-banner__timer-sep {
+  color: #fff;
+  font-family: 'Cambon', serif;
+  font-weight: 300;
+  font-size: 24px;
+  line-height: 1;
+  padding-top: 2px;
+}
+
+/* Mobile */
+@media (max-width: 749px) {
+  .promo-banner__inner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 28px;
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  .promo-banner__left {
+    align-items: center;
+  }
+
+  .promo-banner__btn {
+    align-self: center;
+  }
+
+  .promo-banner__pretitle {
+    font-size: 16px;
+  }
+
+  .promo-banner__title {
+    font-size: 26px;
+  }
+
+  .promo-banner__timer {
+    justify-content: center;
+  }
+
+  .promo-banner__timer-num {
+    font-size: 22px;
+  }
+
+  .promo-banner__timer-unit {
+    min-width: 50px;
+  }
+
+  .promo-banner__timer-sep {
+    font-size: 20px;
+  }
+}

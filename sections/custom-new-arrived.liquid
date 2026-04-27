@@ -1,0 +1,219 @@
+{{ 'custom-new-arrived.css' | asset_url | stylesheet_tag }}
+
+<section class="new-arrived page-width" id="na-{{ section.id }}">
+  {%- if section.settings.title != blank -%}
+    <h2 class="new-arrived__title">{{ section.settings.title }}</h2>
+  {%- endif -%}
+
+  {%- assign collection = collections[section.settings.collection] -%}
+
+  <div class="new-arrived__grid{% if section.settings.mobile_layout == 'grid' %} new-arrived__grid--mobile-grid{% endif %}">
+    {%- for product in collection.products limit: section.settings.products_count -%}
+      {%- assign current_variant = product.first_available_variant | default: product.variants.first -%}
+      {%- assign color_option_index = nil -%}
+      {%- for option in product.options -%}
+        {%- assign option_downcase = option | downcase -%}
+        {%- if option_downcase == 'color' or option_downcase == 'colour' -%}
+          {%- assign color_option_index = forloop.index0 -%}
+        {%- endif -%}
+      {%- endfor -%}
+
+      <div class="product-card" data-product-id="{{ product.id }}">
+        <div class="product-card__image-wrap">
+          <a href="{{ product.url }}" class="product-card__image-link">
+            <img
+              class="product-card__image"
+              src="{{ current_variant.image | default: product.featured_image | image_url: width: 600 }}"
+              alt="{{ product.title | escape }}"
+              width="300"
+              height="400"
+              loading="lazy"
+            >
+          </a>
+
+          {%- if product.metafields.custom.is_new == true -%}
+            <span class="product-card__badge">NEW</span>
+          {%- endif -%}
+
+          <button class="product-card__dots" aria-label="Quick actions">
+            <span></span><span></span><span></span>
+          </button>
+
+          <div class="product-card__hover-actions">
+            <a href="{{ product.url }}" class="product-card__shop-now">SHOP NOW</a>
+          </div>
+        </div>
+
+        <div class="product-card__info">
+          <p class="product-card__vendor">{{ product.vendor }}</p>
+          <p class="product-card__title">{{ product.title }}</p>
+          <p class="product-card__price">{{ current_variant.price | money }}</p>
+        </div>
+
+        {%- if color_option_index != nil -%}
+          <div class="product-card__swatches">
+            {%- assign shown_colors = '' -%}
+            {%- assign color_count = 0 -%}
+            {%- for variant in product.variants -%}
+              {%- assign color_value = variant.options[color_option_index] -%}
+              {%- unless shown_colors contains color_value -%}
+                {%- assign shown_colors = shown_colors | append: color_value | append: '|' -%}
+                {%- assign color_count = color_count | plus: 1 -%}
+              {%- endunless -%}
+            {%- endfor -%}
+
+            {%- assign shown_colors = '' -%}
+            {%- assign swatch_index = 0 -%}
+            {%- for variant in product.variants -%}
+              {%- assign color_value = variant.options[color_option_index] -%}
+              {%- unless shown_colors contains color_value -%}
+                {%- assign shown_colors = shown_colors | append: color_value | append: '|' -%}
+                {%- assign swatch_index = swatch_index | plus: 1 -%}
+                {%- if swatch_index <= 3 -%}
+                  <button
+                    class="product-card__swatch{% if variant == current_variant %} is-active{% endif %}"
+                    data-color="{{ color_value }}"
+                    data-variant-id="{{ variant.id }}"
+                    data-image="{{ variant.image | default: product.featured_image | image_url: width: 600 }}"
+                    style="background-color: {{ color_value | downcase | replace: ' ', '' }};"
+                    aria-label="{{ color_value }}"
+                    title="{{ color_value }}"
+                  ></button>
+                {%- endif -%}
+              {%- endunless -%}
+            {%- endfor -%}
+
+            {%- if color_count > 3 -%}
+              <a href="{{ product.url }}" class="product-card__swatch product-card__swatch--more" title="View all colors">
+                &bull;&bull;&bull;
+              </a>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </div>
+    {%- endfor -%}
+  </div>
+
+  <div class="new-arrived__dots" id="new-arrived-dots-{{ section.id }}"></div>
+
+  {%- if section.settings.view_all_label != blank and section.settings.collection != blank -%}
+    <div class="new-arrived__footer">
+      <a href="{{ collections[section.settings.collection].url }}" class="new-arrived__view-all">
+        {{ section.settings.view_all_label }}
+      </a>
+    </div>
+  {%- endif -%}
+</section>
+
+<script>
+  (function () {
+    const naSection = document.getElementById('na-{{ section.id }}');
+    if (!naSection) return;
+
+    naSection.querySelectorAll('.product-card').forEach(card => {
+      const dotsBtn = card.querySelector('.product-card__dots');
+      const hoverActions = card.querySelector('.product-card__hover-actions');
+      const img = card.querySelector('.product-card__image');
+
+      dotsBtn?.addEventListener('click', () => {
+        const isOpen = hoverActions.classList.toggle('is-visible');
+        dotsBtn.style.opacity = isOpen ? '0' : '1';
+        dotsBtn.style.pointerEvents = isOpen ? 'none' : 'auto';
+      });
+
+      card.querySelectorAll('.product-card__swatch').forEach(swatch => {
+        swatch.addEventListener('click', () => {
+          card.querySelectorAll('.product-card__swatch').forEach(s => s.classList.remove('is-active'));
+          swatch.classList.add('is-active');
+          if (img && swatch.dataset.image) img.src = swatch.dataset.image;
+        });
+      });
+    });
+
+    // Mobile pagination dots (slider mode only)
+    const grid = naSection.querySelector('.new-arrived__grid:not(.new-arrived__grid--mobile-grid)');
+    const dotsContainer = document.getElementById('new-arrived-dots-{{ section.id }}');
+
+    if (grid && dotsContainer) {
+      const cards = grid.querySelectorAll('.product-card');
+
+      function buildDots() {
+        dotsContainer.innerHTML = '';
+        if (window.innerWidth > 749) return;
+        const cardWidth = cards[0].offsetWidth + 16;
+        const visibleCount = Math.floor(grid.offsetWidth / cardWidth);
+        const pageCount = cards.length - visibleCount + 1;
+
+        for (let i = 0; i < pageCount; i++) {
+          const dot = document.createElement('button');
+          dot.className = 'new-arrived__dot' + (i === 0 ? ' is-active' : '');
+          dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+          dot.addEventListener('click', () => {
+            grid.scrollTo({ left: cards[i].offsetLeft - grid.offsetLeft, behavior: 'smooth' });
+          });
+          dotsContainer.appendChild(dot);
+        }
+      }
+
+      buildDots();
+      window.addEventListener('resize', buildDots);
+
+      grid.addEventListener('scroll', () => {
+        const dots = dotsContainer.querySelectorAll('.new-arrived__dot');
+        const maxScroll = grid.scrollWidth - grid.offsetWidth;
+        const cardWidth = cards[0].offsetWidth + 16;
+        const atEnd = grid.scrollLeft >= maxScroll - 5;
+        const index = atEnd ? dots.length - 1 : Math.round(grid.scrollLeft / cardWidth);
+        dots.forEach((dot, i) => dot.classList.toggle('is-active', i === index));
+      });
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "New Arrived",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "NEW ARRIVED"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection"
+    },
+    {
+      "type": "range",
+      "id": "products_count",
+      "label": "Number of products",
+      "min": 2,
+      "max": 8,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "select",
+      "id": "mobile_layout",
+      "label": "Mobile layout",
+      "options": [
+        { "value": "slider", "label": "Slider" },
+        { "value": "grid", "label": "Grid (2 columns)" }
+      ],
+      "default": "slider"
+    },
+    {
+      "type": "text",
+      "id": "view_all_label",
+      "label": "View all link text",
+      "default": "View Collection"
+    }
+  ],
+  "presets": [
+    { "name": "New Arrived" }
+  ]
+}
+{% endschema %}
