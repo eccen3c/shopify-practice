@@ -1,0 +1,129 @@
+{{ 'custom-promo-banner.css' | asset_url | stylesheet_tag }}
+
+<section
+  class="promo-banner"
+  {% if section.settings.bg_image %}
+    style="background-image: url('{{ section.settings.bg_image | image_url: width: 2000 }}')"
+  {% endif %}
+>
+  <div class="promo-banner__inner page-width">
+    <div class="promo-banner__left">
+      {%- if section.settings.pretitle != blank -%}
+        <p class="promo-banner__pretitle">{{ section.settings.pretitle }}</p>
+      {%- endif -%}
+
+      {%- if section.settings.title != blank -%}
+        <h2 class="promo-banner__title">{{ section.settings.title }}</h2>
+      {%- endif -%}
+
+      {%- if section.settings.button_label != blank -%}
+        <a href="{{ section.settings.button_link | default: '#' }}" class="promo-banner__btn">
+          {{ section.settings.button_label }}
+        </a>
+      {%- endif -%}
+    </div>
+
+    {%- if section.settings.end_date != blank -%}
+      <div class="promo-banner__countdown" data-end="{{ section.settings.end_date }}">
+        <div class="promo-banner__timer">
+          <div class="promo-banner__timer-unit">
+            <span class="promo-banner__timer-num" id="pb-days-{{ section.id }}">00</span>
+            <span class="promo-banner__timer-label">Day</span>
+          </div>
+          <span class="promo-banner__timer-sep">&middot;</span>
+          <div class="promo-banner__timer-unit">
+            <span class="promo-banner__timer-num" id="pb-hours-{{ section.id }}">00</span>
+            <span class="promo-banner__timer-label">Hour</span>
+          </div>
+          <span class="promo-banner__timer-sep">&middot;</span>
+          <div class="promo-banner__timer-unit">
+            <span class="promo-banner__timer-num" id="pb-mins-{{ section.id }}">00</span>
+            <span class="promo-banner__timer-label">Min</span>
+          </div>
+          <span class="promo-banner__timer-sep">&middot;</span>
+          <div class="promo-banner__timer-unit">
+            <span class="promo-banner__timer-num" id="pb-secs-{{ section.id }}">00</span>
+            <span class="promo-banner__timer-label">Sec</span>
+          </div>
+        </div>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+<script>
+  (function () {
+    const wrap = document.querySelector('[data-end]');
+    if (!wrap) return;
+
+    const endDate = new Date(wrap.dataset.end).getTime();
+    const daysEl  = document.getElementById('pb-days-{{ section.id }}');
+    const hoursEl = document.getElementById('pb-hours-{{ section.id }}');
+    const minsEl  = document.getElementById('pb-mins-{{ section.id }}');
+    const secsEl  = document.getElementById('pb-secs-{{ section.id }}');
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function tick() {
+      const diff = endDate - Date.now();
+      if (diff <= 0) {
+        [daysEl, hoursEl, minsEl, secsEl].forEach(el => el.textContent = '00');
+        return;
+      }
+      daysEl.textContent  = String(Math.floor(diff / 86400000));
+      hoursEl.textContent = pad(Math.floor((diff % 86400000) / 3600000));
+      minsEl.textContent  = pad(Math.floor((diff % 3600000) / 60000));
+      secsEl.textContent  = pad(Math.floor((diff % 60000) / 1000));
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Promo Banner",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "pretitle",
+      "label": "Pretitle",
+      "default": "Limited time only"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Sale up to 40% off"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button text",
+      "default": "Shop Now"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link"
+    },
+    {
+      "type": "text",
+      "id": "end_date",
+      "label": "Countdown end date",
+      "info": "Format: 2026-12-31T23:59:59",
+      "default": "2026-12-31T23:59:59"
+    },
+    {
+      "type": "image_picker",
+      "id": "bg_image",
+      "label": "Background pattern image"
+    }
+  ],
+  "presets": [
+    { "name": "Promo Banner" }
+  ]
+}
+{% endschema %}

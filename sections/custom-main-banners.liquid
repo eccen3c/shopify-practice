@@ -1,0 +1,91 @@
+{{ 'custom-main-banners.css' | asset_url | stylesheet_tag }}
+
+<section class="main-banners page-width">
+  <div class="main-banners__grid">
+
+    {%- assign main_banner = section.blocks | where: 'type', 'main_banner' | first -%}
+    {%- assign side_banners = section.blocks | where: 'type', 'side_banner' -%}
+
+    {%- if main_banner -%}
+      <a class="main-banners__main" href="{{ main_banner.settings.link }}"
+        {% if main_banner.settings.image != blank %}
+          style="background-image: url('{{ main_banner.settings.image | image_url: width: 1200 }}')"
+        {% endif %}
+      >
+        <div class="main-banners__overlay"></div>
+        <div class="main-banners__content">
+          {%- if main_banner.settings.pretitle != blank -%}
+            <p class="main-banners__pretitle">{{ main_banner.settings.pretitle }}</p>
+          {%- endif -%}
+          {%- if main_banner.settings.title != blank -%}
+            <h2 class="main-banners__title">{{ main_banner.settings.title }}</h2>
+          {%- endif -%}
+        </div>
+      </a>
+    {%- endif -%}
+
+    <div class="main-banners__side">
+      {%- for block in side_banners -%}
+        <a class="main-banners__side-item" href="{{ block.settings.link }}"
+          {% if block.settings.image != blank %}
+            style="background-image: url('{{ block.settings.image | image_url: width: 600 }}')"
+          {% endif %}
+          {{ block.shopify_attributes }}
+        >
+          <div class="main-banners__overlay"></div>
+          <div class="main-banners__content">
+            {%- if block.settings.title != blank -%}
+              <h3 class="main-banners__side-title">{{ block.settings.title }}</h3>
+            {%- endif -%}
+            {%- if block.settings.subtitle != blank -%}
+              <p class="main-banners__side-subtitle">{{ block.settings.subtitle }}</p>
+            {%- endif -%}
+          </div>
+        </a>
+      {%- endfor -%}
+    </div>
+
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Main Banners",
+  "tag": "section",
+  "max_blocks": 3,
+  "blocks": [
+    {
+      "type": "main_banner",
+      "name": "Main Banner",
+      "limit": 1,
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "text", "id": "pretitle", "label": "Pre-title" },
+        { "type": "textarea", "id": "title", "label": "Title" },
+        { "type": "url", "id": "link", "label": "Link" }
+      ]
+    },
+    {
+      "type": "side_banner",
+      "name": "Side Banner",
+      "limit": 2,
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "text", "id": "title", "label": "Title" },
+        { "type": "text", "id": "subtitle", "label": "Subtitle" },
+        { "type": "url", "id": "link", "label": "Link" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Main Banners",
+      "blocks": [
+        { "type": "main_banner" },
+        { "type": "side_banner" },
+        { "type": "side_banner" }
+      ]
+    }
+  ]
+}
+{% endschema %}
