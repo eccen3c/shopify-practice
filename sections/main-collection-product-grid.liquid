@@ -1,4 +1,5 @@
 {{ 'template-collection.css' | asset_url | stylesheet_tag }}
+{{ 'custom-best-sellers.css' | asset_url | stylesheet_tag }}
 {{ 'component-loading-overlay.css' | asset_url | stylesheet_tag }}
 {{ 'component-card.css' | asset_url | stylesheet_tag }}
 {{ 'component-price.css' | asset_url | stylesheet_tag }}
@@ -145,22 +146,101 @@
               "
             >
               {%- for product in collection.products -%}
-                {% assign lazy_load = false %}
-                {%- if forloop.index > 2 -%}
-                  {%- assign lazy_load = true -%}
-                {%- endif -%}
+                {%- assign current_variant = product.first_available_variant | default: product.variants.first -%}
+                {%- assign color_option_index = nil -%}
+                {%- for option in product.options -%}
+                  {%- assign option_downcase = option | downcase -%}
+                  {%- if option_downcase == 'color' or option_downcase == 'colour' -%}
+                    {%- assign color_option_index = forloop.index0 -%}
+                  {%- endif -%}
+                {%- endfor -%}
                 <li class="grid__item">
-                  {% render 'card-product',
-                    card_product: product,
-                    media_aspect_ratio: section.settings.image_ratio,
-                    show_secondary_image: section.settings.show_secondary_image,
-                    show_vendor: section.settings.show_vendor,
-                    show_rating: section.settings.show_rating,
-                    lazy_load: lazy_load,
-                    show_quick_add: section.settings.enable_quick_add,
-                    section_id: section.id
-                  %}
+                  <div class="product-card" data-product-id="{{ product.id }}">
+                    <div class="product-card__image-wrap">
+                      <a href="{{ product.url }}" class="product-card__image-link">
+                        <img
+                          class="product-card__image"
+                          src="{{ current_variant.image | default: product.featured_image | image_url: width: 600 }}"
+                          alt="{{ product.title | escape }}"
+                          width="300"
+                          height="400"
+                          {% if forloop.index > 2 %}loading="lazy"{% endif %}
+                        >
+                      </a>
+                      {%- if product.metafields.custom.is_new == true -%}
+                        <span class="product-card__badge">NEW</span>
+                      {%- endif -%}
+                      <button class="product-card__dots" aria-label="Quick actions">
+                        <span></span><span></span><span></span>
+                      </button>
+                      <div class="product-card__hover-actions">
+                        <a href="{{ product.url }}" class="product-card__shop-now">SHOP NOW</a>
+                      </div>
+                    </div>
+                    <div class="product-card__info">
+                      <p class="product-card__vendor">{{ product.vendor }}</p>
+                      <p class="product-card__title">{{ product.title }}</p>
+                      <p class="product-card__price">{{ current_variant.price | money }}</p>
+                    </div>
+                    {%- if color_option_index != nil -%}
+                      <div class="product-card__swatches">
+                        {%- assign shown_colors = '' -%}
+                        {%- assign color_count = 0 -%}
+                        {%- for variant in product.variants -%}
+                          {%- assign color_value = variant.options[color_option_index] -%}
+                          {%- unless shown_colors contains color_value -%}
+                            {%- assign shown_colors = shown_colors | append: color_value | append: '|' -%}
+                            {%- assign color_count = color_count | plus: 1 -%}
+                          {%- endunless -%}
+                        {%- endfor -%}
+                        {%- assign shown_colors = '' -%}
+                        {%- assign swatch_index = 0 -%}
+                        {%- for variant in product.variants -%}
+                          {%- assign color_value = variant.options[color_option_index] -%}
+                          {%- unless shown_colors contains color_value -%}
+                            {%- assign shown_colors = shown_colors | append: color_value | append: '|' -%}
+                            {%- assign swatch_index = swatch_index | plus: 1 -%}
+                            {%- if swatch_index <= 3 -%}
+                              <button
+                                class="product-card__swatch{% if variant == current_variant %} is-active{% endif %}"
+                                data-color="{{ color_value }}"
+                                data-variant-id="{{ variant.id }}"
+                                data-image="{{ variant.image | default: product.featured_image | image_url: width: 600 }}"
+                                style="background-color: {{ color_value | downcase | replace: ' ', '' }};"
+                                aria-label="{{ color_value }}"
+                                title="{{ color_value }}"
+                              ></button>
+                            {%- endif -%}
+                          {%- endunless -%}
+                        {%- endfor -%}
+                        {%- if color_count > 3 -%}
+                          <a href="{{ product.url }}" class="product-card__swatch product-card__swatch--more">
+                            &bull;&bull;&bull;
+                          </a>
+                        {%- endif -%}
+                      </div>
+                    {%- endif -%}
+                  </div>
                 </li>
+
+                {%- assign show_promo = false -%}
+                {%- if forloop.index == 6 -%}{%- assign show_promo = true -%}{%- endif -%}
+                {%- if forloop.last and collection.products.size < 6 -%}{%- assign show_promo = true -%}{%- endif -%}
+                {%- if show_promo -%}
+                  <li class="grid__item promo-banner-item">
+                    {%- assign promo_link = section.settings.promo_link | default: '#' -%}
+                    <div class="promo-banner-card" style="background-color:{{ section.settings.promo_bg_color }};display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:520px;position:relative;overflow:hidden;">
+                      <div style="position:relative;z-index:1;text-align:center;padding:24px;">
+                        {%- if section.settings.promo_subtitle != blank -%}
+                          <p style="font-family:var(--font-body-family);font-weight:300;font-size:12px;color:#fff;margin:0 0 12px;letter-spacing:0.05em;">{{ section.settings.promo_subtitle }}</p>
+                        {%- endif -%}
+                        {%- if section.settings.promo_title != blank -%}
+                          <p style="font-family:var(--font-body-family);font-weight:300;font-size:28px;color:#fff;margin:0;line-height:1.1;text-transform:uppercase;">{{ section.settings.promo_title }}</p>
+                        {%- endif -%}
+                      </div>
+                    </div>
+                  </li>
+                {%- endif -%}
               {%- endfor -%}
             </ul>
 
@@ -174,11 +254,384 @@
   {%- endpaginate -%}
 </div>
 
+<script>
+  document.querySelectorAll('#product-grid .product-card').forEach(card => {
+    const dotsBtn = card.querySelector('.product-card__dots');
+    const hoverActions = card.querySelector('.product-card__hover-actions');
+    const img = card.querySelector('.product-card__image');
+    dotsBtn?.addEventListener('click', () => {
+      const isOpen = hoverActions.classList.toggle('is-visible');
+      dotsBtn.style.opacity = isOpen ? '0' : '1';
+      dotsBtn.style.pointerEvents = isOpen ? 'none' : 'auto';
+    });
+    card.querySelectorAll('.product-card__swatch').forEach(swatch => {
+      swatch.addEventListener('click', () => {
+        card.querySelectorAll('.product-card__swatch').forEach(s => s.classList.remove('is-active'));
+        swatch.classList.add('is-active');
+        if (img && swatch.dataset.image) img.src = swatch.dataset.image;
+      });
+    });
+  });
+</script>
+
+<style>
+/* ===== Collection Grid Row Gap ===== */
+#product-grid.product-grid {
+  row-gap: 48px !important;
+}
+#product-grid.product-grid .grid__item {
+  display: flex !important;
+  flex-direction: column !important;
+}
+.promo-banner-card {
+  flex: none !important;
+}
+@media screen and (max-width: 749px) {
+  .promo-banner-item {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+@media screen and (min-width: 750px) {
+  .promo-banner-card {
+    min-height: unset !important;
+    height: unset !important;
+    aspect-ratio: 3/4 !important;
+  }
+}
+/* ===== EI-5 Filter Styling ===== */
+.facets__form {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+}
+.facets__wrapper {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  align-items: center !important;
+  padding: 9px 0 !important;
+  order: 1 !important;
+  border-bottom: none !important;
+}
+.facet-filters.sorting {
+  order: 2 !important;
+  flex: 0 0 auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.active-facets-desktop {
+  order: 3 !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 16px !important;
+  align-items: center !important;
+  padding: 9px 0 !important;
+}
+.product-count.light {
+  order: 4 !important;
+  width: 100% !important;
+  padding: 9px 0 !important;
+}
+.facets__heading.caption-large {
+  display: none !important;
+}
+/* Filter pill buttons */
+.facets__summary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  height: 46px !important;
+  padding: 0 14px !important;
+  border-radius: 50px !important;
+  border: 1px solid #FAF0DB !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  background: transparent !important;
+  list-style: none !important;
+  min-width: max-content !important;
+  font-family: var(--font-body-family) !important;
+  font-weight: 300 !important;
+  font-size: 14px !important;
+  color: #1F727C !important;
+}
+.facets__summary > div {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-family: var(--font-body-family) !important;
+  font-weight: 300 !important;
+  font-size: 14px !important;
+  color: #1F727C !important;
+}
+.facets__summary .icon-caret svg,
+.facets__summary svg.icon-caret {
+  color: #1F727C !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+.facets__summary::marker,
+.facets__summary::-webkit-details-marker { display: none !important; }
+/* Sort */
+.facet-filters.sorting .facet-filters__field {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: 46px !important;
+  padding: 0 14px !important;
+  border: none !important;
+  border-bottom: 1px solid #FAF0DB !important;
+  gap: 18px !important;
+  min-width: 241px !important;
+  background: transparent !important;
+}
+.facet-filters__label,
+.facet-filters__label label {
+  font-family: var(--font-body-family) !important;
+  font-weight: 300 !important;
+  font-size: 14px !important;
+  color: #1F727C !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+}
+.facet-filters .select {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  border: none !important;
+}
+.facet-filters__sort.select__select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border: none !important;
+  background: transparent !important;
+  font-family: var(--font-body-family) !important;
+  font-weight: 300 !important;
+  font-size: 14px !important;
+  color: #1F727C !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  outline: none !important;
+}
+.facet-filters .select .icon-caret svg { color: #1F727C !important; }
+/* Active filter pills */
+.active-facets__button--light { text-decoration: none !important; }
+.active-facets__button--light .active-facets__button-inner {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: 50px !important;
+  padding: 0 16px !important;
+  border-radius: 50px !important;
+  background: #FAF0DB !important;
+  border: 1px solid #FAF0DB !important;
+  color: #1F727C !important;
+  font-family: var(--font-body-family) !important;
+  font-weight: 300 !important;
+  font-size: 14px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+.active-facets__button--light .active-facets__button-inner svg {
+  color: #1F727C !important;
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0 !important;
+}
+.active-facets__button-remove,
+.active-facets__button-remove span {
+  font-family: var(--font-body-family) !important;
+  font-weight: 300 !important;
+  font-size: 15px !important;
+  text-transform: uppercase !important;
+  text-decoration: underline !important;
+  color: #1F727C !important;
+}
+/* Product count */
+.product-count.light h2,
+.product-count.light .product-count__text {
+  font-family: var(--font-body-family) !important;
+  font-weight: 300 !important;
+  font-size: 14px !important;
+  color: #1F727C !important;
+  text-align: left !important;
+  margin: 0 !important;
+}
+/* ===== Mobile Drawer ===== */
+.mobile-facets__close { display: none !important; }
+.mobile-facets__inner {
+  background: #fff !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.mobile-facets__header { display: none !important; }
+.mobile-facets__main {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 0 !important;
+}
+.mobile-facets__details .mobile-facets__summary {
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 24px !important;
+  height: 64px !important;
+  border-bottom: 1px solid #F5EDD6 !important;
+  list-style: none !important;
+  cursor: pointer !important;
+}
+.mobile-facets__details .mobile-facets__summary > div {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+.mobile-facets__details .mobile-facets__summary > div > span:first-child {
+  font-family: var(--font-body-family) !important;
+  font-weight: 300 !important;
+  font-size: 16px !important;
+  color: #1F727C !important;
+}
+.mobile-facets__summary::marker,
+.mobile-facets__summary::-webkit-details-marker { display: none !important; }
+.mobile-facets__arrow { display: none !important; }
+/* Sort row */
+.mobile-facets__sort {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 0 !important;
+  height: 64px !important;
+  border-bottom: 1px solid #F5EDD6 !important;
+}
+.mobile-facets__sort label {
+  font-family: var(--font-body-family) !important;
+  font-weight: 300 !important;
+  font-size: 16px !important;
+  color: #1F727C !important;
+  cursor: pointer !important;
+}
+.mobile-facets__sort .select {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  border: none !important;
+}
+.mobile-facets__sort .select__select {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  border: none !important;
+  background: transparent !important;
+  font-family: var(--font-body-family) !important;
+  font-weight: 300 !important;
+  font-size: 16px !important;
+  color: #1F727C !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  outline: none !important;
+}
+/* Search bar */
+.mobile-facets__search-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 18px 16px !important;
+  border-top: 1px solid #FAF0DB !important;
+  flex-shrink: 0 !important;
+}
+.mobile-facets__search-input {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  font-family: var(--font-body-family) !important;
+  font-weight: 300 !important;
+  font-size: 16px !important;
+  color: #1F727C !important;
+  flex: 1 !important;
+  padding: 0 !important;
+}
+.mobile-facets__search-input:focus {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.mobile-facets__search-input::placeholder {
+  color: #1F727C !important;
+  opacity: 0.6 !important;
+}
+/* Footer buttons */
+.mobile-facets__footer {
+  display: flex !important;
+  align-items: center !important;
+  padding: 16px !important;
+  border-top: 1px solid #FAF0DB !important;
+  gap: 5px !important;
+}
+.mobile-facets__footer facet-remove {
+  flex: 1 !important;
+  display: flex !important;
+}
+.mobile-facets__footer-btn {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 43px !important;
+  padding: 0 28px !important;
+  border: none !important;
+  font-family: var(--font-body-family) !important;
+  font-weight: 300 !important;
+  font-size: 15px !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+.mobile-facets__footer-btn--apply {
+  background: #FF8674 !important;
+  color: #fff !important;
+}
+.mobile-facets__footer-btn--reset {
+  background: #1F727C !important;
+  color: #fff !important;
+}
+</style>
+
 {% schema %}
 {
   "name": "t:sections.main-collection-product-grid.name",
   "class": "section",
   "settings": [
+    {
+      "type": "header",
+      "content": "Promo Banner"
+    },
+    {
+      "type": "text",
+      "id": "promo_subtitle",
+      "label": "Subtitle",
+      "default": "Limited time only"
+    },
+    {
+      "type": "textarea",
+      "id": "promo_title",
+      "label": "Title",
+      "default": "SALE UP TO 40% OFF"
+    },
+    {
+      "type": "color",
+      "id": "promo_bg_color",
+      "label": "Background color",
+      "default": "#E87A52"
+    },
+    {
+      "type": "url",
+      "id": "promo_link",
+      "label": "Link"
+    },
     {
       "type": "range",
       "id": "products_per_page",
